@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FixAdmin - ตรวจสอบสถานะงานซ่อม</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .track-body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: radial-gradient(circle, #252525 0%, #121212 100%);
+            padding: 1rem;
+        }
+
+        .track-container {
+            background-color: var(--bg-card);
+            padding: 2.5rem;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 550px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 2rem;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 0.75rem;
+            background-color: #2b2b2b;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: white;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+        }
+
+        .search-box input:focus {
+            border-color: var(--yellow-primary);
+            outline: none;
+        }
+
+        .btn-search {
+            padding: 0.75rem 1.5rem;
+            background-color: var(--yellow-primary);
+            color: black;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-search:hover {
+            background-color: var(--yellow-hover);
+        }
+
+        .result-box {
+            background: #1a1a1a;
+            border-radius: 8px;
+            padding: 1.5rem;
+            border: 1px dashed var(--border-color);
+            display: none;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.8rem 0;
+            border-bottom: 1px solid #2b2b2b;
+            flex-wrap: wrap;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            color: var(--text-gray);
+        }
+
+        .result-value {
+            font-weight: bold;
+        }
+
+        .btn-upload {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+            display: inline-block;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body class="track-body">
+
+    <div class="track-container">
+        <div class="login-header" style="text-align: center; margin-bottom: 20px;">
+            <i class="fa-solid fa-magnifying-glass logo-icon" style="font-size: 3rem; color: var(--yellow-primary);"></i>
+            <h2>TRACK<span style="color: var(--yellow-primary);">STATUS</span></h2>
+            <p style="color: #aaa;">ระบบตรวจสอบสถานะงานซ่อมมือถือ - ร้าน Fix & Pub</p>
+        </div>
+
+        <div class="search-box">
+            <input type="text" id="trackIdInput" placeholder="กรอกเลขออร์เดอร์ เช่น FIX-1372" autocomplete="off">
+            <button class="btn-search" id="searchBtn"><i class="fa-solid fa-search"></i> ค้นหา</button>
+        </div>
+
+        <p id="trackStatusMessage" style="text-align: center; color: var(--text-gray); display: none;"></p>
+
+        <div class="result-box" id="resultBox">
+            <div class="result-item">
+                <span class="result-label">เลขออร์เดอร์</span>
+                <span class="result-value text-yellow" id="resId"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">ชื่อลูกค้า</span>
+                <span class="result-value" id="resName"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">รุ่นโทรศัพท์</span>
+                <span class="result-value" id="resModel"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">อาการเสีย / รายละเอียด</span>
+                <span class="result-value" id="resDetail"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">ราคาค่าซ่อม</span>
+                <span class="result-value text-yellow" id="resPrice"></span>
+            </div>
+            <div class="result-item" style="align-items: center;">
+                <span class="result-label">สถานะปัจจุบัน</span>
+                <span id="resStatus"></span>
+            </div>
+
+            <div id="uploadSlipArea" style="display: none; margin-top: 20px; padding-top: 15px; border-top: 1px dashed #444; text-align: center;">
+                <p style="color: #ffc107; font-size: 0.9rem; margin-bottom: 10px;"><i class="fa-solid fa-wallet"></i> ซ่อมเสร็จแล้ว แจ้งหลักฐานการโอนเงินที่นี่</p>
+                <input type="file" id="slipFile" accept="image/*" style="display: none;" onchange="previewAndUploadSlip()">
+                <button class="btn-upload" onclick="document.getElementById('slipFile').click()">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> เลือกรูปหลักฐานสลิปโอนเงิน
+                </button>
+                <div id="uploadStatus" style="margin-top: 10px; font-size: 0.85rem; color: #aaa;"></div>
+            </div>
+        </div>
+
+        <div style="margin-top: 25px; text-align: center;">
+            <a href="index.html" style="color: #aaa; text-decoration: none; font-size: 0.85rem;">
+                <i class="fa-solid fa-arrow-left"></i> กลับหน้าแดชบอร์ดหลัก
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // ใส่ลิงก์ตัวดั้งเดิมของคุณที่รันได้ปกติลงไปตรงนี้ได้เลยครับ
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby2HkqiRj8QNf443O6dkSdihCQABv5TaCA-Lax-qwY68elZfkGWyIqbyVJ_H4-JESDs/exec";
+        let lockedJobId = "";
+
+        document.getElementById('searchBtn').addEventListener('click', doTrackRepair);
+        document.getElementById('trackIdInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter' || e.keyCode === 13) { doTrackRepair(); }
+        });
+
+        function doTrackRepair() {
+            const searchId = document.getElementById('trackIdInput').value.trim().toUpperCase();
+            const msg = document.getElementById('trackStatusMessage');
+            const resultBox = document.getElementById('resultBox');
+
+            if (!searchId) { alert('กรุณากรอกเลขออร์เดอร์ก่อนครับ'); return; }
+
+            resultBox.style.display = 'none';
+            msg.style.display = 'block';
+            msg.style.color = '#aaa';
+            msg.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังค้นหาในฐานข้อมูล...';
+
+            fetch(SCRIPT_URL)
+                .then(response => response.json())
+                .then(data => {
+                    const job = data.find(item => item.id.toString().trim().toUpperCase() === searchId);
+
+                    if (job) {
+                        msg.style.display = 'none';
+                        resultBox.style.display = 'block';
+                        lockedJobId = job.id.toString().trim();
+
+                        document.getElementById('resId').textContent = job.id;
+                        document.getElementById('resName').textContent = maskName(job.name);
+                        document.getElementById('resModel').textContent = job.model;
+                        document.getElementById('resDetail').textContent = job.detail;
+                        document.getElementById('resPrice').textContent = Number(job.price).toLocaleString() + " บาท";
+
+                        let badgeClass = '';
+                        if (job.status === 'รอดำเนินการ') badgeClass = 'badge-pending';
+                        if (job.status === 'กำลังซ่อม') badgeClass = 'badge-progress';
+                        if (job.status === 'ซ่อมเสร็จแล้ว') badgeClass = 'badge-success';
+
+                        document.getElementById('resStatus').className = `badge ${badgeClass}`;
+                        document.getElementById('resStatus').textContent = job.status;
+
+                        if (job.status === 'ซ่อมเสร็จแล้ว') {
+                            document.getElementById('uploadSlipArea').style.display = 'block';
+                            document.getElementById('uploadStatus').textContent = '';
+                        } else {
+                            document.getElementById('uploadSlipArea').style.display = 'none';
+                        }
+                    } else {
+                        msg.style.display = 'block';
+                        msg.style.color = '#ff4444';
+                        msg.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> ไม่พบเลขออร์เดอร์นี้ในระบบ';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    msg.style.display = 'block';
+                    msg.style.color = '#ff4444';
+                    msg.textContent = 'เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล';
+                });
+        }
+
+        function previewAndUploadSlip() {
+            const fileInput = document.getElementById('slipFile');
+            const statusText = document.getElementById('uploadStatus');
+
+            if (!lockedJobId) {
+                alert('ไม่พบข้อมูลรหัสออร์เดอร์ กรุณากดค้นหาใหม่อีกครั้ง');
+                return;
+            }
+            if (fileInput.files.length === 0) return;
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            statusText.style.color = '#ffc107';
+            statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังส่งหลักฐานสลิปเข้าสู่ระบบ...';
+
+            reader.onload = function (e) {
+                fetch(SCRIPT_URL, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        action: "uploadSlip",
+                        id: lockedJobId,
+                        image: e.target.result
+                    })
+                })
+                .then(res => res.json())
+                .then(response => {
+                    if (response.status === "success") {
+                        statusText.style.color = '#28a745';
+                        statusText.innerHTML = '<b><i class="fa-solid fa-circle-check"></i> อัปโหลดสลิปเรียบร้อย! ช่างกำลังตรวจสอบครับ</b>';
+                        alert('ส่งหลักฐานสำเร็จ!');
+                    } else {
+                        statusText.style.color = '#ff4444';
+                        statusText.innerHTML = '❌ เกิดข้อผิดพลาด: ' + response.message;
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    statusText.style.color = '#ff4444';
+                    statusText.innerHTML = '❌ ล้มเหลว ระบบเครือข่ายขัดข้อง';
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function maskName(name) {
+            if (name.length <= 4) return name;
+            return name.substring(0, 5) + "***";
+        }
+    </script>
+</body>
+
+</html>
